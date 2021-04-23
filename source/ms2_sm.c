@@ -3212,6 +3212,7 @@ void print_matrix(long int segsites,struct var2 **inputp,FILE *output,int x,long
 			}
 			fprintf(output,">L%ldPop%ld\n%s\n",i,j,list2[i]);
 		}
+        fprintf(output,">ANCESTOR_REFERENCE\n%s\n",list_ancestor);
 		fprintf(output,"\n");
 		for(i=0;i<(*inputp)->nsam;i++) free(list2[i]);
         free(list2);
@@ -3312,6 +3313,7 @@ void print_matrix(long int segsites,struct var2 **inputp,FILE *output,int x,long
 			}
 			fprintf(output,">L%ldPop%ld\n%s\n",i,j,list2[i]);
 		}
+        fprintf(output,">ANCESTOR_REFERENCE\n%s\n",list_ancestor);
         fprintf(output,"\n");
         for(i=0;i<(*inputp)->nsam;i++) free(list2[i]);
         free(list2);
