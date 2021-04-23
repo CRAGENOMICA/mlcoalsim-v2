@@ -739,7 +739,7 @@ double freqtestn_achaz(int sample_size,int *fr,int singleton,double *w1,double *
 	double sigmaii(int,int),sigmaij(int,int,int);
 	double an(int),a2n(int);
     
-    if(sample_size < 4 || (sample_size < 6 && singleton==0)) return(-10000);
+    if(sample_size < 4) return(-10000);
 	
 	ww = (double *)calloc(sample_size,sizeof(double));
     
@@ -819,7 +819,6 @@ double freqtestn_achaz(int sample_size,int *fr,int singleton,double *w1,double *
 	
     return Test;
 }
-/*
 double an(int n)
 {
     static double *an_m=0;
@@ -864,6 +863,8 @@ double a2n(int n)
     }
 	return a2ni;
 }
+
+/**/
 double bn(int n,int i)
 {
 	double an(int);
@@ -885,44 +886,7 @@ double bn(int n,int i)
     }
 	return bni;
 }
-*/
-double an(int n)
-{
-    static double *an_m=0;
-    static int nsam=0;
-    long int i;
-    
-    if(nsam == 0) {
-        an_m = (double *)calloc(n+2, sizeof(double));
-        for(i=1;i<n+1;i++)
-            an_m[i+1] = an_m[i] + 1.0/(double)i;
-        nsam = n;
-    } else {
-        if(nsam < n) {
-            an_m = (double *)realloc(an_m,(n+2)*sizeof(double));
-            for(i=nsam+1;i<n+1;i++)
-                an_m[i+1] = an_m[i] + 1.0/(double)i;
-            nsam = n;
-        }
-    }
-    return an_m[n];
-}
-double a2n(int n)
-{
-    double a2ni = 0.;
-    int i;
-    for(i=1;i<n;i++)
-        a2ni += (1.0/((double)i*(double)i));
-    return a2ni;
-}
-double bn(int n,int i)
-{
-    double an(int);
-    double bni;
-    bni = (2.0*(double)n)/((double)(n-i+1)*(double)(n-i)) * (an(n+1) - an(i)) - 2.0/((double)(n-i));
-    return bni;
-}
-
+/**/
 double sigmaii(int n,int i)
 {
 	double an(int),bn(int,int);

@@ -765,7 +765,7 @@ struct segl *segtre_mig(long int npop,int nsam,int *inconfig,long int nsites,dou
             /*in case selection type 2 it is considered always under selection but drift is more powerful*/
             #endif
             
-            if(sfreqend > /*0.*/eps) freqend = sfreqend;/*modification for stopping the selective process at freqend given!!!!*/
+            if(sfreqend > 0.0) freqend = sfreqend;/*modification for stopping the selective process at freqend given!!!!*/
             else freqend = eps;/*in case selective mutation is a new mutation*/
             if(sfreqinit < 1.0) freqinit = sfreqinit;/*modification for starting the selective process at freqinit given!!!!*/
             else freqinit = 1.0;/*in case selective mutation finishing normally*/
@@ -1168,7 +1168,16 @@ struct segl *segtre_mig(long int npop,int nsam,int *inconfig,long int nsites,dou
  					xdt = xdt * (xdt*(1.0+fitness)+(1.0-xdt)*(1.0+fitness/2.0))/avgftns;
 					xdt = (double)largebinomialdist(xdt,pop_size*factpop[0])/(pop_size*factpop[0]);/*DRIFT*/
 					
-					while(xdt == 0. && config[0]>1) {
+					if(xdt)
+						coal_prob0 = dt * factor_chrnall * ((double)config[0])*(config[0]-(double)1)/((double)   xdt);
+					else coal_prob0 = (config[0]-(double)1) * 99999.;					
+					if(1.-xdt)
+						coal_prob1 = dt * factor_chrnall * ((double)config[1])*(config[1]-(double)1)/((double)1- xdt);
+					else coal_prob1 = (config[1]-(double)1) * 99999.;
+					coal_prob  = coal_prob0 + coal_prob1;
+					rec_prob  = dt * tot_rec;
+					
+					while(xdt == 0. && config[0]>2) {
                         /*do all coalescences at the same time?*/
                         ttemp = ttemp/(config[0]-1);
                         t += ttemp;
@@ -1181,30 +1190,10 @@ struct segl *segtre_mig(long int npop,int nsam,int *inconfig,long int nsites,dou
                         dec = ca(nsam,nsites,c1,c2,weightrec,r,tr);	
                         config[pop] -= dec;
                         #if PRINT_TRACE_SELECTION == 1
-                            fprintf(filexdt,"\n%.7f\t%f\t%ld\t%ld",t,xdt,config[0],config[1]);
+                            fprintf(filexdt,"\n%f\t%f\t%ld\t%ld",t,xdt,config[0],config[1]);
                         #endif
                     }
-                    if(xdt == 0 && config[0]==1) {
-                        new_chrom = 0;
-                        while(chrom[new_chrom].pop == 1) new_chrom++;
-                        config[chrom[new_chrom].pop] -= 1;
-                        chrom[new_chrom].pop = 1;
-                        config[chrom[new_chrom].pop] += 1;
-                        #if PRINT_TRACE_SELECTION == 1
-                            fprintf(filexdt,"\n%.7f\t%f\t%ld\t%ld",t,xdt,config[0],config[1]);
-                            fflush(filexdt);
-                        #endif
-                    }
-                    
-                    if(xdt)
-                        coal_prob0 = dt * factor_chrnall * ((double)config[0])*(config[0]-(double)1)/((double)   xdt);
-                    else coal_prob0 = (config[0]-(double)1) * 99999.;
-                    if(1.-xdt)
-                        coal_prob1 = dt * factor_chrnall * ((double)config[1])*(config[1]-(double)1)/((double)1- xdt);
-                    else coal_prob1 = (config[1]-(double)1) * 99999.;
-                    coal_prob  = coal_prob0 + coal_prob1;
-                    rec_prob  = dt * tot_rec;
-                    
+					
 					if(nevent < npop_events) {
 						if((t <= pop_event[nevent].time_event) && (t+ttemp > pop_event[nevent].time_event)) { /*CHANGES IN POPULATION SIZE: TO CHECK!!*/
 							t = pop_event[nevent].time_event /*+1E-17*//*precission error*/;/*modify time*/
@@ -1257,7 +1246,7 @@ struct segl *segtre_mig(long int npop,int nsam,int *inconfig,long int nsites,dou
 					flagintn = 0;
 				}
                 #if PRINT_TRACE_SELECTION == 1
-                    fprintf(filexdt,"\n%.7f\t%f\t%ld\t%ld",t,xdt,config[0],config[1]);
+                    fprintf(filexdt,"\n%f\t%f\t%ld\t%ld",t,xdt,config[0],config[1]);
                 #endif
             }
             #if PRINT_TRACE_SELECTION == 1
@@ -1503,7 +1492,7 @@ void xover(int nsam,int ic,long int is,double *weightrec,long int nsites,double 
     struct seg *pseg,*pseg2;
     long int i,lsg,lsgm1,newsg,jseg,k,in;
     double len,lenr;
-    double ran(void);
+    double ran();
     
     pseg = chrom[ic].pseg;	/* punter al primer segment de l'individu ic */
     lsg  = chrom[ic].nseg;	/* nombre de segments de ic */

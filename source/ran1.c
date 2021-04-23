@@ -59,7 +59,7 @@ double ran1(void)
 
 double randoms(void)
 {
-	int rand(void);
+	int rand();
 	return(rand()/(RAND_MAX+1.0));
 }
 

@@ -2932,8 +2932,9 @@ void print_matrix(long int segsites,struct var2 **inputp,FILE *output,int x,long
 	int xx;
 	long int kk,ll,pnsites;
 	long int s0,s1,psegsites=0;
-    char **list2;
+    char **list2,*list_ancestor;
 	char ss[1];
+    double p;
 	
 	void function_atcg(int,long int,long int,char **,double *);
 	
@@ -3117,13 +3118,28 @@ void print_matrix(long int segsites,struct var2 **inputp,FILE *output,int x,long
 		}
     }
     if(x==1) {
+        /*create ancestor sequence*/
+        if(!(list_ancestor = (char *)malloc((long int)((*inputp)->nsites+1)*sizeof(char))))
+            perror("malloc error in ms.3.a");
+        for(j=0;j<(*inputp)->nsites;j++) {
+            p = (double)rand()/(double)RAND_MAX;
+            if(p<=0.25) list_ancestor[j] = 'A';
+            if(p>0.25 && p <=0.50) list_ancestor[j] = 'G';
+            if(p>0.50 && p <=0.75) list_ancestor[j] = 'C';
+            if(p>0.75) list_ancestor[j] = 'T';
+        }
         if(!(list2 = (char **)malloc((unsigned)((*inputp)->nsam)*sizeof(char *)))) perror("malloc error in ms.3a");
 		for(i=0;i<(*inputp)->nsam;i++) {
 			if(!(list2[i] = (char *)malloc((long int)((*inputp)->nsites+1)*sizeof(char))))
 				perror("malloc error in ms.3");
-			memset(list2[i],'A',(*inputp)->nsites);
+            /*create a sequence*/
+            for(j=0;j<(*inputp)->nsites;j++) {
+                list2[i][j] = list_ancestor[j];
+            }
+            /*memset(list2[i],'A',(*inputp)->nsites);*/
 			list2[i][(*inputp)->nsites] = '\0';
 		}
+        /*
 		for(i=0;i<(*inputp)->nsam;i++) {
 			if(list[i][0] == '1') list2[i][posit[0]] = 'G';
 			if(list[i][0] == '2') list2[i][posit[0]] = 'C';
@@ -3138,11 +3154,56 @@ void print_matrix(long int segsites,struct var2 **inputp,FILE *output,int x,long
 				}
 			}
 		}
-		
+        */
+        for(i=0;i<(*inputp)->nsam;i++) {
+            if(list[i][0] == '1') {
+                if(list2[i][posit[0]] == 'A') list2[i][posit[0]] = 'G';
+                if(list2[i][posit[0]] == 'G') list2[i][posit[0]] = 'A';
+                if(list2[i][posit[0]] == 'C') list2[i][posit[0]] = 'T';
+                if(list2[i][posit[0]] == 'T') list2[i][posit[0]] = 'C';
+            }
+            if(list[i][0] == '2') {
+                if(list2[i][posit[0]] == 'A') list2[i][posit[0]] = 'C';
+                if(list2[i][posit[0]] == 'C') list2[i][posit[0]] = 'A';
+                if(list2[i][posit[0]] == 'T') list2[i][posit[0]] = 'G';
+                if(list2[i][posit[0]] == 'G') list2[i][posit[0]] = 'T';
+            }
+            if(list[i][0] == '3') {
+                if(list2[i][posit[0]] == 'A') list2[i][posit[0]] = 'T';
+                if(list2[i][posit[0]] == 'T') list2[i][posit[0]] = 'A';
+                if(list2[i][posit[0]] == 'C') list2[i][posit[0]] = 'G';
+                if(list2[i][posit[0]] == 'G') list2[i][posit[0]] = 'C';
+            }
+        }
+        for(j=1;j<(int)segsites;j++) {
+            if(!(posit[j-1] == posit[j])) {
+                for(i=0;i<(*inputp)->nsam;i++) {
+                    if(list[i][j] == '1') {
+                        if(list2[i][posit[j]] == 'A') list2[i][posit[j]] = 'G';
+                        if(list2[i][posit[j]] == 'G') list2[i][posit[j]] = 'A';
+                        if(list2[i][posit[j]] == 'C') list2[i][posit[j]] = 'T';
+                        if(list2[i][posit[j]] == 'T') list2[i][posit[j]] = 'C';
+                    }
+                    if(list[i][j] == '2') {
+                        if(list2[i][posit[j]] == 'A') list2[i][posit[j]] = 'C';
+                        if(list2[i][posit[j]] == 'C') list2[i][posit[j]] = 'A';
+                        if(list2[i][posit[j]] == 'T') list2[i][posit[j]] = 'G';
+                        if(list2[i][posit[j]] == 'G') list2[i][posit[j]] = 'T';
+                    }
+                    if(list[i][j] == '3') {
+                        if(list2[i][posit[j]] == 'A') list2[i][posit[j]] = 'T';
+                        if(list2[i][posit[j]] == 'T') list2[i][posit[j]] = 'A';
+                        if(list2[i][posit[j]] == 'C') list2[i][posit[j]] = 'G';
+                        if(list2[i][posit[j]] == 'G') list2[i][posit[j]] = 'C';
+                    }
+                }
+            }
+        }
+
 		if((*inputp)->patcg[0] != -1.) 
 			function_atcg((*inputp)->nsam,segsites,(*inputp)->nsites,list2,(*inputp)->patcg);
 			
-		fprintf(output,"\nFASTA file: locus %d, nsam %d, total sites %ld, mutations %ld, iteration %ld\n",(*inputp)->nloci,(*inputp)->nsam,(*inputp)->nsites,segsites,count0);
+        fprintf(output,"\n# FASTA file: locus %d, nsam %d, total sites %ld, mutations %ld, iteration %ld\n",(*inputp)->nloci,(*inputp)->nsam,(*inputp)->nsites,segsites,count0);
 		j=h=0;
 		for(i=0;i<(*inputp)->nsam;i++) {
 			while(i-h >= (*inputp)->config[j]) {
@@ -3154,31 +3215,85 @@ void print_matrix(long int segsites,struct var2 **inputp,FILE *output,int x,long
 		fprintf(output,"\n");
 		for(i=0;i<(*inputp)->nsam;i++) free(list2[i]);
         free(list2);
+        free(list_ancestor);
     }
     if(x==3) { /* exclude mhits from the matrix, but also the outgroup sequence in speciation with mhits */
+        /*create ancestor sequence*/
+        if(!(list_ancestor = (char *)malloc((long int)((*inputp)->nsites+1)*sizeof(char))))
+            perror("malloc error in ms.3.a");
+        for(j=0;j<(*inputp)->nsites;j++) {
+            p = (double)rand()/(double)RAND_MAX;
+            if(p<=0.25) list_ancestor[j] = 'A';
+            if(p>0.25 && p <=0.50) list_ancestor[j] = 'G';
+            if(p>0.50 && p <=0.75) list_ancestor[j] = 'C';
+            if(p>0.75) list_ancestor[j] = 'T';
+        }
         if(!(list2 = (char **)malloc((unsigned)((*inputp)->nsam)*sizeof(char *)))) perror("malloc error in ms.3a");
         for(i=0;i<(*inputp)->nsam;i++) {
             if(!(list2[i] = (char *)malloc((long int)((*inputp)->nsites+1)*sizeof(char))))
                 perror("malloc error in ms.3");
-            memset(list2[i],'A',(*inputp)->nsites);
+            for(j=0;j<(*inputp)->nsites;j++) {
+                list2[i][j] = list_ancestor[j];
+            }
+            /*memset(list2[i],'A',(*inputp)->nsites);*/
             list2[i][(*inputp)->nsites] = '\0';
         }
         k = 0;
         if(segsites > 0) {
             if((h=ispolnomhit(0,0,(*inputp)->nsam,(*inputp)->nsam)) > 0) {
                 for(i=0;i<(*inputp)->nsam;i++) {
+                    /*
                     if(list[i][0] == '1') list2[i][posit[0]-k] = 'G';
                     if(list[i][0] == '2') list2[i][posit[0]-k] = 'C';
                     if(list[i][0] == '3') list2[i][posit[0]-k] = 'T';
+                    */
+                    if(list[i][0] == '1') {
+                        if(list2[i][posit[0]-k] == 'A') list2[i][posit[0]-k] = 'G';
+                        if(list2[i][posit[0]-k] == 'G') list2[i][posit[0]-k] = 'A';
+                        if(list2[i][posit[0]-k] == 'C') list2[i][posit[0]-k] = 'T';
+                        if(list2[i][posit[0]-k] == 'T') list2[i][posit[0]-k] = 'C';
+                    }
+                    if(list[i][0] == '2') {
+                        if(list2[i][posit[0]-k] == 'A') list2[i][posit[0]-k] = 'C';
+                        if(list2[i][posit[0]-k] == 'C') list2[i][posit[0]-k] = 'A';
+                        if(list2[i][posit[0]-k] == 'T') list2[i][posit[0]-k] = 'G';
+                        if(list2[i][posit[0]-k] == 'G') list2[i][posit[0]-k] = 'T';
+                    }
+                    if(list[i][0] == '3') {
+                        if(list2[i][posit[0]-k] == 'A') list2[i][posit[0]-k] = 'T';
+                        if(list2[i][posit[0]-k] == 'T') list2[i][posit[0]-k] = 'A';
+                        if(list2[i][posit[0]-k] == 'C') list2[i][posit[0]-k] = 'G';
+                        if(list2[i][posit[0]-k] == 'G') list2[i][posit[0]-k] = 'C';
+                    }
                 }
             }
             else if(h == -2) k++;/*k=0; check positions*/
             for(j=1;j<(int)segsites;j++) {
                 if((h=ispolnomhit(j,0,(*inputp)->nsam,(*inputp)->nsam)) > 0) {
                     for(i=0;i<(*inputp)->nsam;i++) {
+                        /*
                         if(list[i][j] == '1') list2[i][posit[j]-k] = 'G';
                         if(list[i][j] == '2') list2[i][posit[j]-k] = 'C';
                         if(list[i][j] == '3') list2[i][posit[j]-k] = 'T';
+                        */
+                        if(list[i][j] == '1') {
+                            if(list2[i][posit[j]-k] == 'A') list2[i][posit[j]-k] = 'G';
+                            if(list2[i][posit[j]-k] == 'G') list2[i][posit[j]-k] = 'A';
+                            if(list2[i][posit[j]-k] == 'C') list2[i][posit[j]-k] = 'T';
+                            if(list2[i][posit[j]-k] == 'T') list2[i][posit[j]-k] = 'C';
+                        }
+                        if(list[i][j] == '2') {
+                            if(list2[i][posit[j]-k] == 'A') list2[i][posit[j]-k] = 'C';
+                            if(list2[i][posit[j]-k] == 'C') list2[i][posit[j]-k] = 'A';
+                            if(list2[i][posit[j]-k] == 'T') list2[i][posit[j]-k] = 'G';
+                            if(list2[i][posit[j]-k] == 'G') list2[i][posit[j]-k] = 'T';
+                        }
+                        if(list[i][j] == '3') {
+                            if(list2[i][posit[j]-k] == 'A') list2[i][posit[j]-k] = 'T';
+                            if(list2[i][posit[j]-k] == 'T') list2[i][posit[j]-k] = 'A';
+                            if(list2[i][posit[j]-k] == 'C') list2[i][posit[j]-k] = 'G';
+                            if(list2[i][posit[j]-k] == 'G') list2[i][posit[j]-k] = 'C';
+                        }
                     }
                 }
                 else if(h == -2) k++;/*k=0; check positions*/
@@ -3188,7 +3303,7 @@ void print_matrix(long int segsites,struct var2 **inputp,FILE *output,int x,long
 			list2[i][((*inputp)->nsites)-k] = '\0';
 		}			
 
-		fprintf(output,"\nFASTA file: locus %d, nsam %d, nsites %ld, mutations %ld, iteration %ld\n",(*inputp)->nloci,(*inputp)->nsam,((*inputp)->nsites)-k,segsites,count0);
+        fprintf(output,"\n# FASTA file: locus %d, nsam %d, nsites %ld, mutations %ld, iteration %ld\n",(*inputp)->nloci,(*inputp)->nsam,((*inputp)->nsites)-k,segsites,count0);
 		h = j = 0;
 		for(i=0;i<(*inputp)->nsam;i++) {
 			while(i-h >= (*inputp)->config[j]) {
@@ -3200,6 +3315,7 @@ void print_matrix(long int segsites,struct var2 **inputp,FILE *output,int x,long
         fprintf(output,"\n");
         for(i=0;i<(*inputp)->nsam;i++) free(list2[i]);
         free(list2);
+        free(list_ancestor);
     }
 }
 
@@ -4030,7 +4146,7 @@ void make_gametes(int nsam, struct node *ptree, double tt,long int newsites,long
     int tdesn(struct node *,int,int);
 	
 	double rr;
-	double ran1(void);
+	double ran1();
 	char r;
 	
 	
@@ -9208,7 +9324,7 @@ int do_heter_gamma_sites(double *categories,double gammashape,double poppar,long
 	/*do a cummulative vector*/
 	long int i;
 	double gammadist(double),newpoppar;
-	double ran1(void);
+	double ran1();
 		
 	newpoppar = poppar * (double)nsites/(double)(nsites-invariable);
 	
